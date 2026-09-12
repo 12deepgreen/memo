@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>メモ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root{
+    --paper: #F7F4EC;
+    --paper-line: #E2DCC9;
+    --card: #FFFFFF;
+    --ink: #23281F;
+    --ink-soft: #6B7060;
+    --moss: #35603F;
+    --moss-dark: #244630;
+    --mustard: #B8862B;
+    --mustard-bg: #F3E6C8;
+    --danger: #A6432E;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(35,40,31,0.06), 0 4px 14px rgba(35,40,31,0.06);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Zen Kaku Gothic New', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{
+    max-width:480px;
+    margin:0 auto;
+    min-height:100vh;
+    background:var(--paper);
+    position:relative;
+    padding-bottom:100px;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    padding:28px 20px 14px;
+    position:sticky;
+    top:0;
+    background:var(--paper);
+    z-index:10;
+    border-bottom:1px solid var(--paper-line);
+  }
+  header .top-row{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:16px;
+  }
+  h1{
+    font-family:'Zen Old Mincho', serif;
+    font-weight:700;
+    font-size:28px;
+    margin:0;
+    letter-spacing:0.02em;
+  }
+  #authArea{font-size:12px;color:var(--ink-soft);}
+  #authArea button{
+    background:none;border:none;color:var(--moss);
+    font-size:12px;text-decoration:underline;cursor:pointer;padding:0;
+    font-family:inherit;
+  }
+  .search-box{
+    display:flex;
+    align-items:center;
+    background:var(--card);
+    border:1px solid var(--paper-line);
+    border-radius:10px;
+    padding:9px 12px;
+    gap:8px;
+  }
+  .search-box svg{flex:none;opacity:0.5;}
+  .search-box input{
+    border:none;outline:none;background:none;
+    font-size:15px;width:100%;
+    font-family:inherit;color:var(--ink);
+  }
+  #tagFilters{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding:14px 20px 4px;
+    scrollbar-width:none;
+  }
+  #tagFilters::-webkit-scrollbar{display:none;}
+  .tag-chip{
+    flex:none;
+    padding:6px 13px;
+    border-radius:999px;
+    font-size:13px;
+    background:var(--card);
+    border:1px solid var(--paper-line);
+    color:var(--ink-soft);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .tag-chip.active{
+    background:var(--mustard-bg);
+    border-color:var(--mustard);
+    color:#5C4514;
+  }
+
+  /* ---------- List ---------- */
+  #memoList{padding:12px 20px 0;}
+  .memo-card{
+    background:var(--card);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:16px 18px;
+    margin-bottom:12px;
+    cursor:pointer;
+  }
+  .memo-card h3{
+    margin:0 0 6px;
+    font-size:16px;
+    font-weight:700;
+    font-family:'Zen Old Mincho', serif;
+  }
+  .memo-card p{
+    margin:0 0 10px;
+    font-size:13.5px;
+    color:var(--ink-soft);
+    line-height:1.6;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+  .memo-meta{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .memo-tags{display:flex;gap:6px;flex-wrap:wrap;}
+  .memo-tags span{
+    font-size:11px;
+    background:var(--mustard-bg);
+    color:#5C4514;
+    padding:2px 9px;
+    border-radius:999px;
+  }
+  .memo-date{font-size:11px;color:#A2A796;flex:none;}
+  #emptyState{
+    text-align:center;
+    color:var(--ink-soft);
+    padding:60px 30px;
+    font-size:14px;
+    line-height:1.8;
+  }
+
+  /* ---------- FAB ---------- */
+  .fab{
+    position:fixed;
+    bottom:28px;
+    left:50%;
+    transform:translateX(calc(-50% + 190px));
+    width:56px;height:56px;
+    border-radius:50%;
+    background:var(--moss);
+    color:#fff;
+    border:none;
+    font-size:28px;
+    line-height:56px;
+    box-shadow:0 6px 18px rgba(53,96,63,0.35);
+    cursor:pointer;
+  }
+  @media (max-width:480px){
+    .fab{ transform:translateX(0); right:20px; left:auto; }
+  }
+
+  /* ---------- Editor ---------- */
+  #editView{
+    display:none;
+    padding:20px;
+  }
+  .editor-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+  }
+  .icon-btn{
+    background:none;border:none;font-size:15px;color:var(--moss);
+    cursor:pointer;padding:6px 0;font-family:inherit;
+  }
+  .icon-btn.danger{color:var(--danger);}
+  #titleInput{
+    width:100%;
+    border:none;
+    outline:none;
+    background:none;
+    font-family:'Zen Old Mincho', serif;
+    font-size:22px;
+    font-weight:700;
+    padding:4px 0 12px;
+    border-bottom:1px solid var(--paper-line);
+    margin-bottom:14px;
+  }
+  #tagsInput{
+    width:100%;
+    border:none;
+    outline:none;
+    background:var(--card);
+    border:1px solid var(--paper-line);
+    border-radius:8px;
+    font-size:13px;
+    padding:9px 12px;
+    margin-bottom:14px;
+    font-family:inherit;
+    color:var(--ink-soft);
+  }
+  #bodyInput{
+    width:100%;
+    min-height:45vh;
+    border:none;
+    outline:none;
+    background:none;
+    font-size:15.5px;
+    line-height:1.9;
+    font-family:inherit;
+    color:var(--ink);
+    resize:vertical;
+  }
+  .save-bar{
+    position:sticky;
+    bottom:0;
+    background:var(--paper);
+    padding:14px 0 6px;
+  }
+  .save-bar button{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:10px;
+    background:var(--moss);
+    color:#fff;
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .save-bar button:active{background:var(--moss-dark);}
+
+  /* ---------- Sign-in gate ---------- */
+  #signinGate{
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    min-height:80vh;
+    padding:40px;
+    text-align:center;
+  }
+  #signinGate h2{
+    font-family:'Zen Old Mincho', serif;
+    font-size:22px;
+    margin-bottom:10px;
+  }
+  #signinGate p{color:var(--ink-soft);font-size:14px;line-height:1.8;margin-bottom:26px;}
+  #signinBtn{
+    padding:13px 28px;
+    border-radius:10px;
+    border:none;
+    background:var(--moss);
+    color:#fff;
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  #syncStatus{
+    text-align:center;
+    font-size:11px;
+    color:#A2A796;
+    padding:8px 0 0;
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <div id="signinGate">
+    <h2>メモ帳</h2>
+    <p>Googleアカウントでログインすると、<br>メモがGoogleドライブに保存され、<br>他の端末からも見られるようになります。</p>
+    <button id="signinBtn">Googleでログイン</button>
+  </div>
+
+  <div id="mainView" style="display:none;">
+    <header>
+      <div class="top-row">
+        <h1>メモ</h1>
+        <div id="authArea"></div>
+      </div>
+      <div class="search-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="searchInput" placeholder="検索(タイトル・本文)">
+      </div>
+    </header>
+
+    <div id="tagFilters"></div>
+
+    <div id="memoList"></div>
+    <div id="emptyState" style="display:none;">メモがありません。<br>右下の「+」から書いてみましょう。</div>
+    <div id="syncStatus"></div>
+
+    <button class="fab" id="newMemoBtn">+</button>
+  </div>
+
+  <div id="editView">
+    <div class="editor-top">
+      <button class="icon-btn" id="backBtn">← 戻る</button>
+      <button class="icon-btn danger" id="deleteBtn" style="display:none;">削除</button>
+    </div>
+    <input id="titleInput" placeholder="タイトル">
+    <input id="tagsInput" placeholder="タグ(カンマ区切り。例: 仕事, 買い物)">
+    <textarea id="bodyInput" placeholder="内容を入力..."></textarea>
+    <div class="save-bar">
+      <button id="saveBtn">保存する</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================
+   設定: ここに mydiary で使っているものと同じ Client ID を入れてください
+   ========================================================= */
+const CLIENT_ID = '978405283561-oa95hlalbuadipbnbegtg2a4ism3j57u.apps.googleusercontent.com';
+const SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+const FILE_NAME = 'memos_v1.json';
+
+let accessToken = sessionStorage.getItem('memo_access_token') || null;
+let tokenClient;
+let memos = [];       // {id, title, body, tags:[...], updatedAt}
+let driveFileId = null;
+let activeTagFilter = null;
+let editingId = null;
+
+/* ---------- Google Sign-In ---------- */
+window.onload = () => {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPE,
+    callback: (resp) => {
+      if (resp.access_token) {
+        accessToken = resp.access_token;
+        sessionStorage.setItem('memo_access_token', accessToken);
+        enterApp();
+      }
+    }
+  });
+
+  document.getElementById('signinBtn').onclick = () => tokenClient.requestAccessToken();
+
+  if (accessToken) {
+    enterApp();
+  } else {
+    document.getElementById('signinGate').style.display = 'flex';
+  }
+};
+
+function enterApp(){
+  document.getElementById('signinGate').style.display = 'none';
+  document.getElementById('mainView').style.display = 'block';
+  document.getElementById('authArea').innerHTML = '<button id="logoutBtn">ログアウト</button>';
+  document.getElementById('logoutBtn').onclick = logout;
+  loadFromDrive();
+}
+
+function logout(){
+  sessionStorage.removeItem('memo_access_token');
+  accessToken = null;
+  location.reload();
+}
+
+/* ---------- Drive I/O ---------- */
+async function driveFetch(url, opts={}){
+  opts.headers = Object.assign({}, opts.headers, {Authorization: 'Bearer ' + accessToken});
+  const res = await fetch(url, opts);
+  if (res.status === 401){ logout(); throw new Error('再ログインが必要です'); }
+  return res;
+}
+
+async function loadFromDrive(){
+  setStatus('読み込み中…');
+  try{
+    const listRes = await driveFetch(
+      `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name='${FILE_NAME}'&fields=files(id,name)`
+    );
+    const listData = await listRes.json();
+    if (listData.files && listData.files.length > 0){
+      driveFileId = listData.files[0].id;
+      const fileRes = await driveFetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`);
+      const text = await fileRes.text();
+      memos = text ? JSON.parse(text) : [];
+    } else {
+      memos = [];
+    }
+    setStatus('');
+    render();
+  }catch(e){
+    setStatus('読み込みに失敗しました');
+    console.error(e);
+  }
+}
+
+async function saveToDrive(){
+  setStatus('保存中…');
+  const content = JSON.stringify(memos);
+  const metadata = driveFileId
+    ? {}
+    : { name: FILE_NAME, parents: ['appDataFolder'] };
+
+  const boundary = '-------memo_boundary';
+  const body =
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
+    `--${boundary}\r\nContent-Type: application/json\r\n\r\n${content}\r\n--${boundary}--`;
+
+  const url = driveFileId
+    ? `https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`
+    : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`;
+
+  try{
+    const res = await driveFetch(url, {
+      method: driveFileId ? 'PATCH' : 'POST',
+      headers: {'Content-Type': `multipart/related; boundary=${boundary}`},
+      body
+    });
+    const data = await res.json();
+    if (!driveFileId) driveFileId = data.id;
+    setStatus('保存しました');
+    setTimeout(()=>setStatus(''), 1500);
+  }catch(e){
+    setStatus('保存に失敗しました');
+    console.error(e);
+  }
+}
+
+function setStatus(msg){
+  document.getElementById('syncStatus').textContent = msg;
+}
+
+/* ---------- Render: list ---------- */
+function render(){
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+
+  const allTags = [...new Set(memos.flatMap(m => m.tags))].sort();
+  const tagBar = document.getElementById('tagFilters');
+  tagBar.innerHTML = '';
+  if (allTags.length){
+    allTags.forEach(tag => {
+      const chip = document.createElement('div');
+      chip.className = 'tag-chip' + (activeTagFilter === tag ? ' active' : '');
+      chip.textContent = tag;
+      chip.onclick = () => { activeTagFilter = (activeTagFilter === tag ? null : tag); render(); };
+      tagBar.appendChild(chip);
+    });
+  }
+
+  let filtered = memos.filter(m => {
+    const matchesQuery = !q || m.title.toLowerCase().includes(q) || m.body.toLowerCase().includes(q);
+    const matchesTag = !activeTagFilter || m.tags.includes(activeTagFilter);
+    return matchesQuery && matchesTag;
+  });
+  filtered.sort((a,b) => b.updatedAt - a.updatedAt);
+
+  const list = document.getElementById('memoList');
+  list.innerHTML = '';
+  document.getElementById('emptyState').style.display = filtered.length ? 'none' : 'block';
+
+  filtered.forEach(m => {
+    const card = document.createElement('div');
+    card.className = 'memo-card';
+    card.onclick = () => openEditor(m.id);
+    card.innerHTML = `
+      <h3>${escapeHtml(m.title || '(無題)')}</h3>
+      <p>${escapeHtml(m.body || '')}</p>
+      <div class="memo-meta">
+        <div class="memo-tags">${m.tags.map(t=>`<span>${escapeHtml(t)}</span>`).join('')}</div>
+        <div class="memo-date">${formatDate(m.updatedAt)}</div>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function formatDate(ts){
+  const d = new Date(ts);
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+/* ---------- Editor ---------- */
+document.getElementById('searchInput').addEventListener('input', render);
+document.getElementById('newMemoBtn').onclick = () => openEditor(null);
+document.getElementById('backBtn').onclick = closeEditor;
+
+function openEditor(id){
+  editingId = id;
+  const m = memos.find(x => x.id === id);
+  document.getElementById('titleInput').value = m ? m.title : '';
+  document.getElementById('tagsInput').value = m ? m.tags.join(', ') : '';
+  document.getElementById('bodyInput').value = m ? m.body : '';
+  document.getElementById('deleteBtn').style.display = m ? 'block' : 'none';
+  document.getElementById('mainView').style.display = 'none';
+  document.getElementById('editView').style.display = 'block';
+}
+
+function closeEditor(){
+  document.getElementById('editView').style.display = 'none';
+  document.getElementById('mainView').style.display = 'block';
+  render();
+}
+
+document.getElementById('saveBtn').onclick = () => {
+  const title = document.getElementById('titleInput').value.trim();
+  const body = document.getElementById('bodyInput').value.trim();
+  const tags = document.getElementById('tagsInput').value
+    .split(',').map(t => t.trim()).filter(Boolean);
+
+  if (!title && !body){ closeEditor(); return; }
+
+  if (editingId){
+    const m = memos.find(x => x.id === editingId);
+    m.title = title; m.body = body; m.tags = tags; m.updatedAt = Date.now();
+  } else {
+    memos.push({ id: crypto.randomUUID(), title, body, tags, updatedAt: Date.now() });
+  }
+  saveToDrive();
+  closeEditor();
+};
+
+document.getElementById('deleteBtn').onclick = () => {
+  if (!confirm('このメモを削除しますか?')) return;
+  memos = memos.filter(x => x.id !== editingId);
+  saveToDrive();
+  closeEditor();
+};
+</script>
+</body>
+</html>
